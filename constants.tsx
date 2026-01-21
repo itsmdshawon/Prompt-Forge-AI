@@ -1,5 +1,5 @@
 import React from 'react';
-import { Model, Settings } from './types';
+import { Model, Settings } from './types.ts';
 
 export const INITIAL_MODELS: Model[] = [
   // Google Gemini models (Vision Capable)

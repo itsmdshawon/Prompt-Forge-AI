@@ -33,13 +33,13 @@ import {
   Settings, 
   Model, 
   Provider
-} from './types';
+} from './types.ts';
 import { 
   INITIAL_MODELS, 
   DEFAULT_SETTINGS, 
   LOGO_SVG 
-} from './constants';
-import { AIService } from './services/aiService';
+} from './constants.tsx';
+import { AIService } from './services/aiService.ts';
 
 export default function App() {
   // --- State ---
@@ -215,7 +215,9 @@ export default function App() {
     const activeModel = models.find(m => m.id === currentSettings.preferredModel) || models[0];
     const keys = currentSettings.apiKeys[activeModel.provider];
 
-    if (keys.length === 0 && !(activeModel.provider === 'gemini' && process.env.API_KEY)) {
+    // Protected environment variable check for browser safety
+    const envKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+    if (keys.length === 0 && !(activeModel.provider === 'gemini' && envKey)) {
       return showNotification(`Please add at least one API key for ${activeModel.provider} in settings.`, "error");
     }
 
@@ -456,6 +458,7 @@ export default function App() {
                         : 'bg-white text-slate-950 hover:bg-slate-200 shadow-xl'
                     }`}
                   >
+                    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%238B5CF6'/%3E%3Cpath d='M35 25V75H48V55H60C70 55 75 50 75 40C75 30 70 25 60 25H35ZM48 35H60C64 35 66 37 66 40C66 43 64 45 60 45H48V35Z' fill='white'/%3E%3C/svg%3E" />
                     <Download size={28} className={hasSuccessfulPrompts ? "text-fuchsia-600" : "text-slate-600"} />
                     Download CSV List
                   </button>

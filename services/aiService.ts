@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Provider, Model, PromptForgeImage, Settings } from '../types';
+import { Provider, Model, PromptForgeImage, Settings } from '../types.ts';
 
 /**
  * Optimized Image Processor
