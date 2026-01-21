@@ -1,0 +1,7 @@
+{
+  "name": "Prompt Forge AI",
+  "description": "A simple tool to turn your images into high-quality AI prompts.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
