@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Analytics } from '@vercel/analytics/react';
 import { 
   Plus, 
   Trash2, 
@@ -745,7 +744,6 @@ export default function App() {
           </div>
         </div>
       )}
-      <Analytics />
     </div>
   );
 }
