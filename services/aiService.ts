@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Provider, Model, PromptForgeImage, Settings } from '../types.ts';
 
@@ -60,6 +59,7 @@ export class AIService {
     task: (apiKey: string) => Promise<any>,
     onKeySwitch?: () => void
   ): Promise<any> {
+    // Check if we have standard env key for gemini
     const hasEnvKey = provider === 'gemini' && typeof process !== 'undefined' && process.env.API_KEY;
     
     if (!keys || keys.length === 0) {
@@ -71,7 +71,8 @@ export class AIService {
 
     const startIndex = keyIndices[provider];
     let attempts = 0;
-    
+    let lastError = "";
+
     while (attempts < keys.length) {
       const currentIndex = (startIndex + attempts) % keys.length;
       const currentKey = keys[currentIndex].trim();
@@ -82,27 +83,36 @@ export class AIService {
       }
 
       try {
+        // If this is not the first attempt in this loop, we just switched keys
         if (attempts > 0 && onKeySwitch) {
           onKeySwitch();
         }
         
         const result = await this.retryTask(task, currentKey, provider);
+        // Successful call! Update the index so next call starts here or with this key's context
         keyIndices[provider] = currentIndex; 
         return result;
       } catch (error: any) {
-        const errLower = error.message.toLowerCase();
+        lastError = error.message;
+        const errLower = lastError.toLowerCase();
+        
+        // Only rotate keys if the error is related to limits or quotas
         const isLimitError = errLower.includes("limit") || 
                              errLower.includes("quota") || 
                              errLower.includes("429") || 
-                             errLower.includes("exhausted");
+                             errLower.includes("exhausted") ||
+                             errLower.includes("timeout");
 
         if (isLimitError) {
           attempts++;
         } else {
+          // Terminal or logic error, don't rotate, just throw
           throw error;
         }
       }
     }
+
+    // If we reach here, all keys in the pool failed with limit errors
     throw new Error(`ALL_KEYS_EXHAUSTED_${provider.toUpperCase()}`);
   }
 
@@ -111,11 +121,15 @@ export class AIService {
       return await task(key);
     } catch (e: any) {
       const err = (e.message || "").toLowerCase();
-      if (err.includes("401") || err.includes("403") || err.includes("invalid_api_key")) {
+      
+      // Stop retrying on terminal errors
+      if (err.includes("401") || err.includes("403") || err.includes("invalid_api_key") || err.includes("does not exist")) {
         throw e;
       }
+
       if (retries > 0) {
-        await new Promise(r => setTimeout(r, 500));
+        const delay = (3 - retries) * 500;
+        await new Promise(r => setTimeout(r, delay));
         return this.retryTask(task, key, provider, retries - 1);
       }
       throw e;
@@ -138,17 +152,29 @@ export class AIService {
       });
     }
 
-    const response = await ai.models.generateContent({
-      model: modelId,
-      contents: { parts },
-      config: { 
-        systemInstruction, 
-        temperature: 0.1,
-        topP: 0.8
-      }
-    });
+    // Wrap the SDK call in a promise race to handle timeouts for stability
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 40000)
+    );
 
-    return response.text || "";
+    const generatePromise = (async () => {
+      const response = await ai.models.generateContent({
+        model: modelId,
+        contents: { parts },
+        config: { 
+          systemInstruction, 
+          temperature: 0.3, // Optimized lower temperature for faster, more deterministic token generation
+          topP: 0.8,       // Slightly tighter topP for speed
+          topK: 40         // Standard optimized topK
+        }
+      });
+
+      const text = response.text || "";
+      if (!text.trim()) throw new Error("EMPTY_GEMINI_RESPONSE");
+      return text;
+    })();
+
+    return await Promise.race([generatePromise, timeoutPromise]) as string;
   }
 
   private static async providerGenerate(
@@ -183,28 +209,44 @@ export class AIService {
       messages.push({ role: 'user', content: prompt });
     }
 
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey.trim()}`
-      },
-      body: JSON.stringify({
-        model: actualModelId,
-        messages,
-        temperature: 0.1,
-        max_tokens: 2500,
-        stream: false
-      })
-    });
-    
-    if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || `API Error ${response.status}`);
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 45000);
+
+    try {
+      const response = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey.trim()}`
+        },
+        body: JSON.stringify({
+          model: actualModelId,
+          messages,
+          temperature: 0.15,
+          max_tokens: 1500,
+          stream: false
+        }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(id);
+
+      if (!response.ok) {
+        const errText = await response.text();
+        let errorData;
+        try { errorData = JSON.parse(errText); } catch(e) { errorData = { error: { message: errText } }; }
+        const message = errorData.error?.message || `API Error ${response.status}`;
+        throw new Error(message);
+      }
+      
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      if (!content || !content.trim()) throw new Error("EMPTY_PROVIDER_RESPONSE");
+      return content;
+    } catch (e: any) {
+      clearTimeout(id);
+      throw e;
     }
-    
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || "";
   }
 
   public static async generatePromptFromImage(
@@ -217,46 +259,21 @@ export class AIService {
     const { data, mime } = await prepareImage(image.file, 1024);
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
-    
-    // THE MASTER SYSTEM PROMPT - RIGID ACCURACY & GENERATOR FOCUS
-    const systemPrompt = `You are a professional AI image prompt engineer. 
+    const systemPrompt = `You are a professional AI image prompt engineer. Your mission is to create a prompt that is a "near carbon copy" of the provided image but with a small (~10%) safe variation for microstock compliance.
 
-First, analyze the image to determine the mode internally:
-1. ICON BUNDLE: A grid or collection of many small icons/symbols.
-2. STANDARD: A single photograph, illustration, or render.
+STRICT RULES:
+1. PRESERVE IMAGE TYPE: You MUST identify and maintain the original medium. If vector, stay vector. If photo, stay photo. If 3D render, stay 3D. If silhouette, stay silhouette. Never cross mediums.
+2. NEAR CARBON COPY + 10% VARIATION: The prompt must be extremely accurate to the subject, pose, position, shapes, colors, background, lighting, and mood. Add only a tiny (~10%) variation in styling or phrasing to ensure it isn't an exact duplicate.
+3. PROMPT LENGTH: Every prompt MUST be at least 3 to 4 full lines long. If the image is complex, write it as long as necessary to capture all details. Do not summarize or use short prompts.
+4. SIMPLE ENGLISH: Use simple English that a 10-year-old can understand. Keep it clean and readable.
+5. NO MARKETING LANGUAGE: Avoid phrases like "best for", "perfect for", "ideal for", or promotional adjectives like "stunning", "masterpiece", "high-quality", "4k".
+6. NO SPECIAL SYMBOLS: Avoid unnecessary symbols, brackets, or weird punctuation.
+7. READY-TO-USE: Output the prompt immediately as a cohesive paragraph. No meta-phrases like "The image shows...". It must be a direct instruction for an AI generator.
+8. COMPLETE DETAILS: Include subject, pose/position, shapes/forms, colors, background, style, lighting, and mood.
+${settings.customInstruction ? `9. CUSTOM GUIDANCE: Incorporate the user's request while maintaining the above rules: "${settings.customInstruction}"` : ''}
+${activeNegativeWords.length > 0 ? `10. FORBIDDEN WORDS: NEVER use: ${activeNegativeWords.join(", ")}` : ''}`;
 
-FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
-
---- NO META-LANGUAGE (CRITICAL) ---
-1. DO NOT START with phrases like "The image is", "This is a photo of", "A graphic design of", "The illustration features", or "An image showing".
-2. START IMMEDIATELY with the subject. For example, instead of "The image is a black cat", write "A black cat sitting on a wooden fence".
-3. Write the text as a direct command for an AI image generator to RECREATE the original.
-
---- RULES FOR ICON BUNDLES ---
-1. EXHAUSTIVE LISTING: Identify every unique icon in the set.
-2. DE-DUPLICATION: If icons repeat, replace duplicates with new unique icon concepts fitting the theme.
-3. FLAT COLORS ONLY: Describe as "flat colors" or "black and white".
-4. NO GRADIENTS & NO TEXT: Do not mention or include gradients or text labels.
-
---- RULES FOR STANDARD IMAGES ---
-1. 10% REMIX: Create a prompt that is a 90% direct description of the reference image, with only a 10% subtle variation in detail. Do NOT change the core concept or style.
-2. COLOR ACCURACY: Only mention colors that are strictly visible. If the image is black on white, describe it as "black" and "white". NEVER add colors (like gold, neon, or vibrant shades) if they do not exist in the source.
-3. DESCRIPTIVE PRECISION: Describe every visible part clearly and simply. If the image is minimal, reach the 5-line requirement by describing the exact thickness of lines, specific curves, and framing. 
-4. NO INVENTED COMPLEXITY: Do not add 3D effects, textures, or lighting that is not present. Keep the description grounded in the original style.
-5. LENGTH CONSTRAINT: The prompt must be at least 5 lines long.
-
---- GLOBAL OUTPUT CONSTRAINTS (MANDATORY) ---
-1. START IMMEDIATELY: Your very first word must be the start of the prompt.
-2. NO MARKDOWN: ABSOLUTELY NO ASTERISKS (*), bolding, or hashtags.
-3. ASCII PUNCTUATION ONLY: 
-   - Use ONLY standard ASCII characters. 
-   - Use ONLY the standard straight apostrophe (') - NEVER use curly or smart apostrophes (’).
-   - Use ONLY letters, numbers, spaces, commas (,), full stops (.), and apostrophes (').
-4. NO MARKETING: Never use words like "stunning", "4k", or "amazing". 
-${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
-${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use these words: ${activeNegativeWords.join(", ")}` : ''}`;
-
-    const userPrompt = "Write the final prompt now as a 5-line descriptive paragraph for an image generator. DO NOT use 'The image is' or meta-language. Match style and concept 90%. Use only visible colors. Use ONLY standard ASCII characters and straight apostrophes. No asterisks.";
+    const userPrompt = "Analyze this image and generate a highly detailed, 3-4+ line near-carbon-copy prompt with 10% safe variation in simple English.";
 
     return await this.executeWithRotation(
       model.provider, 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
@@ -151,23 +150,10 @@ export default function App() {
 
   const getFullPrompt = (rawPrompt: string | undefined, currentSettings: Settings) => {
     if (!rawPrompt) return "";
-    
-    // NORMALIZE CHARACTERS: Fix broken UTF-8 sequences and convert smart quotes to standard ASCII
-    let processedPrompt = rawPrompt
-      .replace(/â€™/g, "'")           // Fix common broken UTF-8 for ’
-      .replace(/â€œ/g, '"')           // Fix common broken UTF-8 for “
-      .replace(/â€ /g, '"')           // Fix common broken UTF-8 for ”
-      .replace(/â€“/g, "-")           // Fix common broken UTF-8 for –
-      .replace(/â€”/g, "-")           // Fix common broken UTF-8 for —
-      .replace(/[\u2018\u2019]/g, "'") // Convert smart single quotes to standard
-      .replace(/[\u201C\u201D]/g, '"') // Convert smart double quotes to standard
-      .replace(/\u2013|\u2014/g, '-') // Convert en/em dashes to standard hyphens
-      .replace(/\*/g, '')             // Final cleanup of any rogue asterisks
-      .trim();
-    
     const activePrefixes = currentSettings.prefixes.slice(0, currentSettings.prefixCount).join(' ');
     const activeSuffixes = currentSettings.suffixes.slice(0, currentSettings.suffixCount).join(' ');
     
+    let processedPrompt = rawPrompt;
     const activeNegativeWords = currentSettings.negativeWords.slice(0, currentSettings.negativeWordCount);
     activeNegativeWords.forEach(word => {
       const regex = new RegExp(`\\b${word}\\b`, 'gi');
@@ -229,6 +215,7 @@ export default function App() {
     const activeModel = models.find(m => m.id === currentSettings.preferredModel) || models[0];
     const keys = currentSettings.apiKeys[activeModel.provider];
 
+    // Protected environment variable check for browser safety
     const envKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     if (keys.length === 0 && !(activeModel.provider === 'gemini' && envKey)) {
       return showNotification(`Please add at least one API key for ${activeModel.provider} in settings.`, "error");
@@ -294,12 +281,7 @@ export default function App() {
     const header = "SL No.,Prompt\r\n";
     const rows = completedList.map((img, i) => {
       const finalPrompt = getFullPrompt(img.prompt, settingsRef.current);
-      // Ensure no asterisks, no quotes, and no extra words are present
-      const promptText = finalPrompt
-        .replace(/\*/g, '')
-        .replace(/"/g, '""')
-        .replace(/\n/g, ' ')
-        .trim();
+      const promptText = finalPrompt.replace(/"/g, '""').replace(/\n/g, ' ').trim();
       return `${i + 1},"${promptText}"`;
     }).join('\r\n');
 
@@ -340,6 +322,7 @@ export default function App() {
   const hasSuccessfulPrompts = images.some(img => img.status === 'completed');
   const hasErrorPrompts = images.some(img => img.status === 'error');
 
+  // Determine button text: Show "Recreate" if we are paused after a failure and the user has switched models
   const isResuming = isPaused && currentProcessingIndex > 0;
   const showRecreate = isResuming && activeModel.provider !== lastFailedProvider;
   const mainButtonLabel = isResuming ? (showRecreate ? 'Recreate' : 'Resume Processing') : 'Start Creating';
@@ -475,6 +458,7 @@ export default function App() {
                         : 'bg-white text-slate-950 hover:bg-slate-200 shadow-xl'
                     }`}
                   >
+                    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%238B5CF6'/%3E%3Cpath d='M35 25V75H48V55H60C70 55 75 50 75 40C75 30 70 25 60 25H35ZM48 35H60C64 35 66 37 66 40C66 43 64 45 60 45H48V35Z' fill='white'/%3E%3C/svg%3E" />
                     <Download size={28} className={hasSuccessfulPrompts ? "text-fuchsia-600" : "text-slate-600"} />
                     Download CSV List
                   </button>
