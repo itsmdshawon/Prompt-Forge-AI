@@ -218,7 +218,7 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE MASTER SYSTEM PROMPT - ACCURACY FOCUS
+    // THE MASTER SYSTEM PROMPT - RIGID ACCURACY
     const systemPrompt = `You are a professional AI image prompt engineer. 
 
 First, analyze the image to determine the mode internally:
@@ -234,10 +234,11 @@ FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 4. NO GRADIENTS & NO TEXT: Do not mention or include gradients or text labels.
 
 --- RULES FOR STANDARD IMAGES ---
-1. EXHAUSTIVE DESCRIPTION: Describe exactly and ONLY what is visible in the image. 
-2. PRESERVE ORIGINALITY: If the image is simple (like a flat black logo), describe every curve, color, and stroke detail without adding imaginary complexity (no 3D, no neon, no extra lighting if not present). 
-3. DEPTH OF DETAIL: Describe subject, background, lighting, and textures in full. If the image is minimal, describe every minimal detail until you have a long paragraph. 
-4. LENGTH CONSTRAINT: You MUST write a paragraph that is at least 5 lines long. 
+1. 10% REMIX: Create a prompt that is a 90% direct description of the reference image, with only a 10% subtle variation in detail. Do NOT change the core concept or style.
+2. COLOR ACCURACY: Only mention colors that are strictly visible. If the image is black on white, describe it as "black" and "white". NEVER add colors (like gold, neon, or vibrant shades) if they do not exist in the source.
+3. DESCRIPTIVE PRECISION: Describe every visible part clearly and simply. If the image is minimal, reach the 5-line requirement by describing the exact thickness of lines, the specific curves, the framing, and the composition. 
+4. NO INVENTED COMPLEXITY: Do not add 3D effects, textures, or lighting that is not present in the original. Keep the description grounded in the original style.
+5. LENGTH CONSTRAINT: The prompt must be at least 5 lines long.
 
 --- GLOBAL OUTPUT CONSTRAINTS (MANDATORY) ---
 1. NO LABELS: NEVER include headers like "ICON BUNDLE MODE".
@@ -251,7 +252,7 @@ FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
 ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use these words: ${activeNegativeWords.join(", ")}` : ''}`;
 
-    const userPrompt = "Write the final prompt now as an exhaustive descriptive paragraph (at least 5 lines). Use ONLY standard ASCII characters and straight apostrophes. No labels, no asterisks, no special symbols.";
+    const userPrompt = "Write the final prompt now as a 5-line descriptive paragraph. Match the style and concept 90%, with only 10% change. Use only visible colors. Use ONLY standard ASCII characters and straight apostrophes. No labels, no asterisks, no special symbols.";
 
     return await this.executeWithRotation(
       model.provider, 
