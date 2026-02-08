@@ -218,7 +218,7 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE MASTER SYSTEM PROMPT - EXHAUSTIVE DETAIL & ASCII VERSION
+    // THE MASTER SYSTEM PROMPT - ACCURACY FOCUS
     const systemPrompt = `You are a professional AI image prompt engineer. 
 
 First, analyze the image to determine the mode internally:
@@ -229,28 +229,29 @@ FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 
 --- RULES FOR ICON BUNDLES ---
 1. EXHAUSTIVE LISTING: Identify every unique icon in the set.
-2. DE-DUPLICATION: If the reference image contains identical or repeating icons, you MUST replace the duplicates with new, unique icon concepts that fit the theme.
+2. DE-DUPLICATION: If icons repeat, replace duplicates with new unique icon concepts fitting the theme.
 3. FLAT COLORS ONLY: Describe as "flat colors" or "black and white".
 4. NO GRADIENTS & NO TEXT: Do not mention or include gradients or text labels.
 
 --- RULES FOR STANDARD IMAGES ---
-1. NEAR CARBON COPY: Recreate the image style, subject, and pose with a subtle 10% remix.
-2. PRESERVE MEDIUM: Keep the exact medium and lighting.
-3. LENGTH & DETAIL: You MUST write a long, exhaustive, and highly descriptive paragraph. Describe every detail, texture, and light source. Be as wordy as possible to provide a complete understanding of the scene.
+1. EXHAUSTIVE DESCRIPTION: Describe exactly and ONLY what is visible in the image. 
+2. PRESERVE ORIGINALITY: If the image is simple (like a flat black logo), describe every curve, color, and stroke detail without adding imaginary complexity (no 3D, no neon, no extra lighting if not present). 
+3. DEPTH OF DETAIL: Describe subject, background, lighting, and textures in full. If the image is minimal, describe every minimal detail until you have a long paragraph. 
+4. LENGTH CONSTRAINT: You MUST write a paragraph that is at least 5 lines long. 
 
 --- GLOBAL OUTPUT CONSTRAINTS (MANDATORY) ---
-1. NO LABELS: NEVER include headers like "ICON BUNDLE MODE" or "STANDARD MODE".
+1. NO LABELS: NEVER include headers like "ICON BUNDLE MODE".
 2. START IMMEDIATELY: Your very first word must be the start of the prompt.
 3. NO MARKDOWN: ABSOLUTELY NO ASTERISKS (*), bolding, or hashtags.
-4. ASCII PUNCTUATION ONLY: ONLY use standard ASCII characters. 
-   - Use only the standard straight apostrophe (') - NEVER use curly or smart apostrophes (’).
-   - Use only standard straight double quotes (") - NEVER use curly or smart quotes.
-   - Use only letters, numbers, spaces, commas (,), full stops (.), and apostrophes (').
+4. ASCII PUNCTUATION ONLY: 
+   - Use ONLY standard ASCII characters. 
+   - Use ONLY the standard straight apostrophe (') - NEVER use curly or smart apostrophes (’).
+   - Use ONLY letters, numbers, spaces, commas (,), full stops (.), and apostrophes (').
 5. NO MARKETING: Never use words like "stunning", "4k", or "amazing". 
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
 ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use these words: ${activeNegativeWords.join(", ")}` : ''}`;
 
-    const userPrompt = "Write the final prompt now as a long, exhaustive, descriptive paragraph. Use ONLY standard ASCII characters and straight apostrophes. No labels, no asterisks, no special symbols.";
+    const userPrompt = "Write the final prompt now as an exhaustive descriptive paragraph (at least 5 lines). Use ONLY standard ASCII characters and straight apostrophes. No labels, no asterisks, no special symbols.";
 
     return await this.executeWithRotation(
       model.provider, 
