@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { Provider, Model, PromptForgeImage, Settings } from '../types.ts';
 
@@ -59,7 +60,6 @@ export class AIService {
     task: (apiKey: string) => Promise<any>,
     onKeySwitch?: () => void
   ): Promise<any> {
-    // Check if we have standard env key for gemini
     const hasEnvKey = provider === 'gemini' && typeof process !== 'undefined' && process.env.API_KEY;
     
     if (!keys || keys.length === 0) {
@@ -83,20 +83,16 @@ export class AIService {
       }
 
       try {
-        // If this is not the first attempt in this loop, we just switched keys
         if (attempts > 0 && onKeySwitch) {
           onKeySwitch();
         }
         
         const result = await this.retryTask(task, currentKey, provider);
-        // Successful call! Update the index so next call starts here or with this key's context
         keyIndices[provider] = currentIndex; 
         return result;
       } catch (error: any) {
         lastError = error.message;
         const errLower = lastError.toLowerCase();
-        
-        // Only rotate keys if the error is related to limits or quotas
         const isLimitError = errLower.includes("limit") || 
                              errLower.includes("quota") || 
                              errLower.includes("429") || 
@@ -106,13 +102,10 @@ export class AIService {
         if (isLimitError) {
           attempts++;
         } else {
-          // Terminal or logic error, don't rotate, just throw
           throw error;
         }
       }
     }
-
-    // If we reach here, all keys in the pool failed with limit errors
     throw new Error(`ALL_KEYS_EXHAUSTED_${provider.toUpperCase()}`);
   }
 
@@ -121,12 +114,9 @@ export class AIService {
       return await task(key);
     } catch (e: any) {
       const err = (e.message || "").toLowerCase();
-      
-      // Stop retrying on terminal errors
       if (err.includes("401") || err.includes("403") || err.includes("invalid_api_key") || err.includes("does not exist")) {
         throw e;
       }
-
       if (retries > 0) {
         const delay = (3 - retries) * 500;
         await new Promise(r => setTimeout(r, delay));
@@ -152,7 +142,6 @@ export class AIService {
       });
     }
 
-    // Wrap the SDK call in a promise race to handle timeouts for stability
     const timeoutPromise = new Promise((_, reject) => 
       setTimeout(() => reject(new Error("GEMINI_TIMEOUT")), 40000)
     );
@@ -163,9 +152,9 @@ export class AIService {
         contents: { parts },
         config: { 
           systemInstruction, 
-          temperature: 0.3, // Optimized lower temperature for faster, more deterministic token generation
-          topP: 0.8,       // Slightly tighter topP for speed
-          topK: 40         // Standard optimized topK
+          temperature: 0.15, // Lowered temperature for tighter logic adherence
+          topP: 0.8,
+          topK: 40
         }
       });
 
@@ -222,8 +211,8 @@ export class AIService {
         body: JSON.stringify({
           model: actualModelId,
           messages,
-          temperature: 0.15,
-          max_tokens: 1500,
+          temperature: 0.1, // Near zero temperature for strict instruction following
+          max_tokens: 2000,
           stream: false
         }),
         signal: controller.signal
@@ -259,21 +248,34 @@ export class AIService {
     const { data, mime } = await prepareImage(image.file, 1024);
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
-    const systemPrompt = `You are a professional AI image prompt engineer. Your mission is to create a prompt that is a "near carbon copy" of the provided image but with a small (~10%) safe variation for microstock compliance.
+    
+    const systemPrompt = `You are a professional AI image prompt engineer. First, classify if the provided image is a collection/bundle of multiple icons (icon set/bundle) or a standard single image.
 
-STRICT RULES:
-1. PRESERVE IMAGE TYPE: You MUST identify and maintain the original medium. If vector, stay vector. If photo, stay photo. If 3D render, stay 3D. If silhouette, stay silhouette. Never cross mediums.
-2. NEAR CARBON COPY + 10% VARIATION: The prompt must be extremely accurate to the subject, pose, position, shapes, colors, background, lighting, and mood. Add only a tiny (~10%) variation in styling or phrasing to ensure it isn't an exact duplicate.
-3. PROMPT LENGTH: Every prompt MUST be at least 3 to 4 full lines long. If the image is complex, write it as long as necessary to capture all details. Do not summarize or use short prompts.
-4. SIMPLE ENGLISH: Use simple English that a 10-year-old can understand. Keep it clean and readable.
-5. NO MARKETING LANGUAGE: Avoid phrases like "best for", "perfect for", "ideal for", or promotional adjectives like "stunning", "masterpiece", "high-quality", "4k".
-6. NO SPECIAL SYMBOLS: Avoid unnecessary symbols, brackets, or weird punctuation.
-7. READY-TO-USE: Output the prompt immediately as a cohesive paragraph. No meta-phrases like "The image shows...". It must be a direct instruction for an AI generator.
-8. COMPLETE DETAILS: Include subject, pose/position, shapes/forms, colors, background, style, lighting, and mood.
-${settings.customInstruction ? `9. CUSTOM GUIDANCE: Incorporate the user's request while maintaining the above rules: "${settings.customInstruction}"` : ''}
-${activeNegativeWords.length > 0 ? `10. FORBIDDEN WORDS: NEVER use: ${activeNegativeWords.join(", ")}` : ''}`;
+IF THE IMAGE IS AN ICON BUNDLE:
+1. EXHAUSTIVE DESCRIPTION: Identify and list EVERY single icon visible in the image. Do not miss any.
+2. 10% REMIX: Create a near-carbon-copy prompt but remix/change the concept by about 10% for copyright safety.
+3. COLOR RULES: Use the exact colors from the image but ONLY flat colors or black and white. 
+4. NO GRADIENTS: Never include gradients in the prompt, even if the reference image has them.
+5. NO TEXT: Do not include any text from the icons or templates (e.g., "40 icon set", niche names, sidebars). Focus only on the icons.
+6. ISOLATED: You MUST include the phrase "Isolated on white background" in the prompt.
+7. STYLE: Keep descriptions simple, clean, and properly aligned. 
+8. FORMAT: Output only the prompt as a long, detailed paragraph. No explanations.
 
-    const userPrompt = "Analyze this image and generate a highly detailed, 3-4+ line near-carbon-copy prompt with 10% safe variation in simple English.";
+IF THE IMAGE IS A REGULAR SINGLE IMAGE (NOT AN ICON BUNDLE):
+1. NEAR CARBON COPY + 10% VARIATION: Extreme accuracy to subject, pose, colors, and mood with a 10% stylistic shift.
+2. PRESERVE MEDIUM: Stay photo if photo, vector if vector, etc.
+3. PROMPT LENGTH: Must be at least 3 to 4 full lines. 
+4. READY-TO-USE: Output as a direct cohesive paragraph.
+
+GLOBAL RULES (APPLIES TO ALL):
+- Use simple English.
+- No marketing/promotional language (e.g., "stunning", "4k", "best for").
+- No special symbols.
+- ${model.provider === 'mistral' ? 'MISTRAL CONSTRAINT: You are known for being too brief. YOU MUST BE EXHAUSTIVE. Write a long, detailed paragraph. Do not finish in 1-2 lines.' : ''}
+${settings.customInstruction ? `- CUSTOM GUIDANCE: "${settings.customInstruction}"` : ''}
+${activeNegativeWords.length > 0 ? `- FORBIDDEN WORDS: NEVER use: ${activeNegativeWords.join(", ")}` : ''}`;
+
+    const userPrompt = "Analyze this image. If it is an icon bundle, follow the Icon Bundle Protocol and describe every icon in detail. If it is a regular image, follow the Standard Protocol. Output only the prompt paragraph.";
 
     return await this.executeWithRotation(
       model.provider, 
