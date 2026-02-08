@@ -1,20 +1,20 @@
+
 import React from 'react';
 import { Model, Settings } from './types.ts';
 
 export const INITIAL_MODELS: Model[] = [
-  // Google Gemini models (Vision Capable)
-  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (High Quality)', provider: 'gemini', hasVision: true },
-  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (Latest)', provider: 'gemini', hasVision: true },
-  { id: 'gemini-flash-latest', name: 'Gemini 2.5 Flash (Standard)', provider: 'gemini', hasVision: true },
-  { id: 'gemini-flash-lite-latest', name: 'Gemini 2.5 Flash (Lite)', provider: 'gemini', hasVision: true },
+  // Google Gemini models
+  { id: 'gemini-flash-latest', name: 'Gemini 2.5 Flash Standard', provider: 'gemini', hasVision: true },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash Latest', provider: 'gemini', hasVision: true },
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro High Quality', provider: 'gemini', hasVision: true },
+  { id: 'gemini-flash-lite-latest', name: 'Gemini 2.5 Flash Lite Fast', provider: 'gemini', hasVision: true },
   
-  // Groq Cloud models (ONLY Vision-capable models as per latest documentation)
-  // These are the new multimodal Llama 4 preview models.
-  { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B Vision', provider: 'groq', hasVision: true },
-  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B Vision', provider: 'groq', hasVision: true },
+  // Groq Cloud models
+  { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout Fast', provider: 'groq', hasVision: true },
+  { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick HQ', provider: 'groq', hasVision: true },
   
-  // Mistral AI models (Vision Capable)
-  { id: 'pixtral-12b-vision', name: 'Pixtral 12B Vision (Standard)', provider: 'mistral', hasVision: true },
+  // Mistral AI models
+  { id: 'pixtral-12b-vision', name: 'Pixtral 12B Vision', provider: 'mistral', hasVision: true },
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
