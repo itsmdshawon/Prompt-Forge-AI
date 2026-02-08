@@ -152,8 +152,18 @@ export default function App() {
   const getFullPrompt = (rawPrompt: string | undefined, currentSettings: Settings) => {
     if (!rawPrompt) return "";
     
-    // Clean raw prompt of any asterisks and multiple spaces
-    let processedPrompt = rawPrompt.replace(/\*/g, '').trim();
+    // NORMALIZE CHARACTERS: Fix broken UTF-8 sequences and convert smart quotes to standard ASCII
+    let processedPrompt = rawPrompt
+      .replace(/â€™/g, "'")           // Fix common broken UTF-8 for ’
+      .replace(/â€œ/g, '"')           // Fix common broken UTF-8 for “
+      .replace(/â€ /g, '"')           // Fix common broken UTF-8 for ”
+      .replace(/â€“/g, "-")           // Fix common broken UTF-8 for –
+      .replace(/â€”/g, "-")           // Fix common broken UTF-8 for —
+      .replace(/[\u2018\u2019]/g, "'") // Convert smart single quotes to standard
+      .replace(/[\u201C\u201D]/g, '"') // Convert smart double quotes to standard
+      .replace(/\u2013|\u2014/g, '-') // Convert en/em dashes to standard hyphens
+      .replace(/\*/g, '')             // Final cleanup of any rogue asterisks
+      .trim();
     
     const activePrefixes = currentSettings.prefixes.slice(0, currentSettings.prefixCount).join(' ');
     const activeSuffixes = currentSettings.suffixes.slice(0, currentSettings.suffixCount).join(' ');

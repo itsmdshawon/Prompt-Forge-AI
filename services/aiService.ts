@@ -143,7 +143,7 @@ export class AIService {
       contents: { parts },
       config: { 
         systemInstruction, 
-        temperature: 0.2,
+        temperature: 0.1,
         topP: 0.8
       }
     });
@@ -193,7 +193,7 @@ export class AIService {
         model: actualModelId,
         messages,
         temperature: 0.1,
-        max_tokens: 2000,
+        max_tokens: 2500,
         stream: false
       })
     });
@@ -218,21 +218,40 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    const systemPrompt = `You are a professional AI image prompt engineer. Your mission is to create a prompt that is a "near carbon copy" of the provided image with a ~10% safe variation.
+    // THE MASTER SYSTEM PROMPT - RIGID ENCODING VERSION
+    const systemPrompt = `You are a professional AI image prompt engineer. 
 
-STRICT RULES:
-1. NEAR CARBON COPY: The prompt must be extremely accurate to subject, pose, position, shapes, colors, background, and lighting.
-2. MEDIUM PRESERVATION: Identify and maintain the original medium (vector, photo, 3D, illustration).
-3. PROMPT LENGTH: Write at least 3 to 4 full detailed lines.
-4. ABSOLUTELY NO ASTERISKS: NEVER use the asterisk (*) symbol or any markdown formatting.
-5. NO INTRODUCTIONS: Start the prompt text immediately. Never say "The image shows..." or "Here is the prompt...".
-6. NO MARKETING: Avoid words like "stunning", "best", "4k", "high quality". Use simple, descriptive English.
-7. PLAIN TEXT ONLY: Use only letters, numbers, spaces, commas, full stops, and apostrophes.
+First, analyze the image to determine the mode internally:
+1. ICON BUNDLE: A grid or collection of many small icons/symbols.
+2. STANDARD: A single photograph, illustration, or render.
 
-${settings.customInstruction ? `- CUSTOM REQUEST: "${settings.customInstruction}"` : ''}
-${activeNegativeWords.length > 0 ? `- FORBIDDEN WORDS: Do not use ${activeNegativeWords.join(", ")}` : ''}`;
+FOLLOW THESE RULES RIGIDLY:
 
-    const userPrompt = "Generate the final prompt now as a single detailed paragraph. No asterisks, no labels, no introductions.";
+--- RULES FOR ICON BUNDLES ---
+1. EXHAUSTIVE LISTING: Identify every unique icon in the set.
+2. DE-DUPLICATION: If the reference image contains identical or repeating icons, you MUST replace the duplicates with new, unique icon concepts that fit the theme.
+3. FLAT COLORS ONLY: Describe as "flat colors" or "black and white".
+4. NO GRADIENTS & NO TEXT: Do not mention or include gradients or text labels.
+
+--- RULES FOR STANDARD IMAGES ---
+1. NEAR CARBON COPY: Recreate the image style, subject, and pose with a subtle 10% remix.
+2. PRESERVE MEDIUM: Keep the exact medium and lighting.
+3. LENGTH: Write 3 to 4 detailed lines.
+
+--- GLOBAL OUTPUT CONSTRAINTS (MANDATORY) ---
+1. NO LABELS: NEVER include headers like "ICON BUNDLE MODE".
+2. START IMMEDIATELY: Your very first word must be the start of the prompt.
+3. NO MARKDOWN: ABSOLUTELY NO ASTERISKS (*), bolding, or hashtags.
+4. ASCII PUNCTUATION ONLY: ONLY use standard ASCII characters. 
+   - Use only the standard straight apostrophe (') - NEVER use curly or smart apostrophes (’).
+   - Use only standard straight double quotes (") - NEVER use curly or smart quotes.
+   - Use only letters, numbers, spaces, commas (,), full stops (.), and apostrophes (').
+5. NO MARKETING: Never use words like "stunning", "4k", or "amazing". 
+${model.provider === 'mistral' ? '- MISTRAL CONSTRAINT: You must write a long, descriptive paragraph.' : ''}
+${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
+${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use these words: ${activeNegativeWords.join(", ")}` : ''}`;
+
+    const userPrompt = "Write the final prompt now using ONLY standard ASCII characters and straight apostrophes. No labels, no asterisks, no special symbols.";
 
     return await this.executeWithRotation(
       model.provider, 
