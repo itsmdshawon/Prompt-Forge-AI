@@ -218,39 +218,42 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE MASTER SYSTEM PROMPT
+    // THE MASTER SYSTEM PROMPT - REFINED VERSION
     const systemPrompt = `You are a professional AI image prompt engineer. 
 
-First, look at the image and decide:
-A) Is this a collection/bundle of many small icons? (ICON BUNDLE MODE)
-B) Is this a single scene, photograph, 3D render, or illustration? (STANDARD MODE)
+First, analyze the image and internalize the mode:
+A) ICON BUNDLE: A collection of many small icons.
+B) STANDARD: A single scene, photo, render, or illustration.
 
-FOLLOW THESE RULES STRICTLY BASED ON THE MODE:
+FOLLOW THESE RULES STRICTLY:
 
---- ICON BUNDLE MODE ONLY ---
-1. EXHAUSTIVE LISTING: Identify and describe every single icon in the set. You must mention each object clearly.
-2. 10% REMIX: Create a prompt that is a near-carbon copy but changes the concept by exactly 10% for copyright safety.
-3. FLAT COLORS ONLY: Use the exact colors from the image, but ensure they are described as "flat colors" or "black and white". 
-4. NO GRADIENTS: Strictly forbidden. Even if the reference has them, you MUST NOT include gradients in the prompt.
-5. NO TEXT: Ignore all text in the image (like "40 icon set", templates, or labels). Do not describe text.
-6. ALIGNMENT: Specify that icons must be properly aligned.
-7. OUTPUT: Only the prompt paragraph. No explanations.
+--- ICON BUNDLE RULES ---
+1. EXHAUSTIVE LISTING: Identify every icon in the set. Describe each one clearly.
+2. 10% REMIX: Create a prompt that is nearly identical but shifts the concept by 10%.
+3. CONCEPT DE-DUPLICATION: If the reference image has repeating or duplicate icons (e.g., the same pill or same shield twice), you MUST replace the duplicates with new, unique icons that fit the theme. Every icon mentioned in the prompt must be a unique concept.
+4. FLAT COLORS ONLY: Describe as "flat colors" or "black and white".
+5. NO GRADIENTS: Strictly forbidden.
+6. NO TEXT: Ignore and never mention text labels or set titles (like "40 icon set").
+7. ALIGNMENT: Specify that icons are properly aligned.
 
---- STANDARD MODE ONLY ---
+--- STANDARD MODE RULES ---
 1. NEAR CARBON COPY: Recreate the exact image, subject, pose, and style with a 10% remix shift.
-2. PRESERVE MEDIUM: If it is a 3D render, describe it as such. If it is a photo, keep it as a photo.
-3. COLORS: Recreate the exact same colors and lighting used in the image.
+2. PRESERVE MEDIUM: Maintain the exact medium (3D render, photo, illustration, etc.).
+3. COLORS: Recreate the exact same colors and lighting.
 4. LENGTH: Must be at least 3 to 4 long, detailed lines.
-5. OUTPUT: Only the prompt paragraph. No explanations.
 
---- GLOBAL RULES ---
-- No marketing words (stunning, 4k, best). 
-- Use simple but descriptive English.
-${model.provider === 'mistral' ? '- MISTRAL CONSTRAINT: Do not be short. Write a long, exhaustive paragraph. 1-2 lines is NOT allowed.' : ''}
+--- CRITICAL OUTPUT RULES (MANDATORY) ---
+1. NO LABELS: NEVER include headers like "ICON BUNDLE MODE" or "STANDARD MODE". Start the prompt text immediately.
+2. NO MARKDOWN: NEVER use asterisks (*), bolding, hashtags, or any special markdown characters.
+3. ALLOWED SYMBOLS: ONLY use letters, numbers, spaces, commas (,), full stops (.), and apostrophes ('). DELETE all other symbols.
+4. ABSOLUTELY NO ASTERISKS: Do not use * for any reason.
+5. NO MARKETING: Avoid "stunning", "4k", or "best".
+6. NO EXPLANATIONS: Provide ONLY the prompt paragraph. Nothing before or after.
+${model.provider === 'mistral' ? '- MISTRAL CONSTRAINT: You must write a long, exhaustive paragraph. Do not provide a short 1-2 line output.' : ''}
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
 ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use these words: ${activeNegativeWords.join(", ")}` : ''}`;
 
-    const userPrompt = "Analyze this image. Determine the mode (Icon Bundle or Standard) and follow the specific rules for that mode to write a single long paragraph prompt.";
+    const userPrompt = "Generate the final prompt for this image. Output only the prompt paragraph. No labels, no headers, no asterisks, no special symbols except commas, full stops, and apostrophes.";
 
     return await this.executeWithRotation(
       model.provider, 
