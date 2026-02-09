@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { Provider, Model, PromptForgeImage, Settings } from '../types.ts';
 
@@ -218,44 +217,42 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND WITH CARBON COPY FOCUS
-    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to create a prompt that serves as a CARBON COPY of the reference image, with exactly 10% subtle variation for legal safety.
+    // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND WITH COMPLEXITY PARITY
+    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to create a prompt that acts as a STRICT CARBON COPY of the reference image.
 
-FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
+FOLLOW THESE RULES RIGIDLY ACROSS ALL MODELS:
 
 --- MANDATORY START ---
-1. YOU MUST ALWAYS START THE PROMPT WITH THE WORD "Create".
-2. NO META-LANGUAGE: Never use "The image is", "An illustration of", etc.
+1. ALWAYS start with the word "Create".
+2. NO META-LANGUAGE: Never say "The image is", "In this picture", etc.
 
---- SUBJECT & IDENTITY PRESERVATION (CRITICAL) ---
-1. NO SUBJECT SWAPPING: A woman silhouette MUST stay a woman. NEVER turn a woman into a man. An eagle MUST stay an eagle with ONE head. NEVER add extra heads or limbs.
-2. NO ODD ARTIFACTS: NEVER add cutting lines, strange objects, or random geometric shapes that aren't in the original.
-3. COMPLEXITY MIRRORING: If the reference is a SIMPLE silhouette, the prompt must be for a SIMPLE silhouette. Do not inflate the detail.
-4. 10% REMIX LIMIT: The variation should be strictly stylistic (e.g., a slightly different brush texture or a 5-degree change in perspective). Do NOT change the core subject or the count of items.
+--- COMPLEXITY PARITY & SIMPLICITY (CRITICAL) ---
+1. STATED COMPLEXITY: If the reference is SIMPLE (e.g., a silhouette, minimalist logo, flat icon), the prompt MUST remain SIMPLE.
+2. NO TEXTURE HALLUCINATION: For minimalist/simple images, NEVER add "textures", "shading", "highlights", "depth", "realism", or "intricate details".
+3. NO EXTRA ARTIFACTS: NEVER add "cutting lines", "dissection marks", geometric overlays, or any objects not present in the original.
+4. MEDIUM LOYALTY: Flat vector stays flat vector. Silhouette stays flat silhouette. 
 
---- MEDIUM & COLOR INTEGRITY ---
-1. MEDIUM LOYALTY: Maintain the medium. Vector stays Vector. Photography stays Photography. 
-2. COLOR LOCK: Use ONLY visible colors. Never turn B&W into color. Never add colors like "Gold" or "Neon" to a black and white image.
+--- IDENTITY & SUBJECT PRESERVATION ---
+1. NO SUBJECT SWAPPING: A woman silhouette MUST stay a woman. NEVER change gender. An eagle MUST stay a single-headed eagle. NEVER add extra heads or limbs.
+2. SUBJECT LOCK: The identity and species of the subject must be 100% faithful to the source.
 
---- DESCRIPTIVE DEPTH & LENGTH ---
-1. EXHAUSTIVE DESCRIPTION: Describe the composition and framing. To reach the 5-line requirement for simple images, describe the exact curves, proportions, and simplicity in detail.
-2. ICON BUNDLES: List every item accurately. Replace duplicates with unique ones in the EXACT SAME simple style.
+--- REACHING LENGTH WITHOUT ADDING COMPLEXITY ---
+1. EXHAUSTIVE DESCRIPTION: To reach the 5-line requirement for simple images, describe the exact curves, the composition, the framing, and the specific geometric proportions of the simple subject. Describe the SIMPLICITY itself in detail rather than adding complex elements.
 
---- GLOBAL OUTPUT CONSTRAINTS ---
-1. NO MARKDOWN: No asterisks (*), bolding, or hashtags.
-2. ASCII ONLY: Use ONLY standard ASCII characters. Use straight apostrophes (').
-3. NO MARKETING: No "stunning", "4k", or "amazing".
+--- GLOBAL CONSTRAINTS ---
+1. NO MARKDOWN: No bolding, asterisks, or headings.
+2. ASCII ONLY: Standard ASCII characters and straight apostrophes (') only.
+3. NO MARKETING: No "stunning", "high resolution", or "8k".
 
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
-${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use: ${activeNegativeWords.join(", ")}` : ''}`;
+${activeNegativeWords.length > 0 ? `- EXCLUDE: ${activeNegativeWords.join(", ")}` : ''}`;
 
-    const userPrompt = `Write the final prompt now. Start with "Create". 
-It MUST be a long paragraph (at least 5 lines). 
-Match the reference subject and style 90%. 
-PRESERVE IDENTITY: Woman stays woman, Eagle stays 1-headed eagle. 
-NO ODD ELEMENTS: Do not add lines or strange shapes. 
-If simple, keep it simple. No color hallucination. 
-Use only standard ASCII and straight apostrophes.`;
+    const userPrompt = `Generate the final prompt now. Start with "Create". 
+Paragraph format, 5+ lines. 
+STRICT COMPLEXITY MATCHING: If the image is simple, keep the prompt simple. No textures or shading for silhouettes. 
+IDENTITY LOCK: Woman stays woman, eagle stays 1-headed. 
+NO ODD ELEMENTS: Do not add cutting lines or strange shapes. 
+ASCII only.`;
 
     return await this.executeWithRotation(
       model.provider, 
