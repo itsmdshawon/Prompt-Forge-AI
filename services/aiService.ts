@@ -219,42 +219,45 @@ export class AIService {
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
     // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND
-    const systemPrompt = `You are a professional AI image prompt engineer. 
+    const systemPrompt = `You are a professional AI image prompt engineer. Your task is to analyze a reference image and create a prompt for an AI generator to recreate it with 90% accuracy and 10% creative variation.
 
 FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 
 --- MANDATORY START ---
 1. YOU MUST ALWAYS START THE PROMPT WITH THE WORD "Create".
-2. NO META-LANGUAGE: NEVER use phrases like "The image is", "This graphic shows", "An illustration of", or "A photograph of".
-3. Example: "Create a simple black silhouette of a crown positioned atop a minimalist profile of a woman..."
+2. NO META-LANGUAGE: NEVER use phrases like "The image is", "This graphic shows", "An illustration of", "A photograph of", or "This image features".
+3. Write the response as a direct command for an AI image generator.
 
---- RULES FOR STANDARD IMAGES ---
-1. 10% REMIX: Write a prompt that is a 90% direct description of the reference image, with only a 10% subtle variation. Stay strictly within the original style and concept.
-2. COLOR INTEGRITY: DO NOT add colors that are not visible in the reference. If the image is black and white, the prompt MUST only describe it as black and white. NEVER add gold, neon, or vibrant colors to a colorless image.
-3. DESCRIPTIVE PRECISION: Describe every part clearly and simply. If the image is minimal, reach the 5-line requirement by describing the exact thickness of lines, curves, composition, and framing in a simple, wordy way.
-4. NO HALLUCINATED COMPLEXITY: Do not add 3D, lighting, or textures that are not in the original. 
+--- CATEGORY & MEDIUM INTEGRITY ---
+1. IDENTIFY MEDIUM: Determine if the image is a Vector (Flat), 3D Render, Photography, Illustration, or PNG icon. 
+2. NO MIXING: Do not treat vectors as photos, or photos as 3D renders. Use specific terms: "Vector illustration", "Realistic photography", "3D render", "Hand-drawn sketch".
+3. COMPLEXITY MATCHING: If the reference is simple, the prompt must be simple. If the reference is complex, the prompt must be complex.
 
---- RULES FOR ICON BUNDLES ---
-1. EXHAUSTIVE LISTING: Identify every unique icon.
-2. DE-DUPLICATION: Replace repeating icons with new unique concepts in the same theme.
-3. FLAT COLORS ONLY: Describe as "flat colors" or "black and white" only. No gradients or text.
+--- COLOR ACCURACY (CRITICAL) ---
+1. STRICT PALETTE: Only mention colors visible in the image.
+2. NO COLOR HALLUCINATION: If the image is black and white, describe it only as "black and white". NEVER add color (gold, neon, vibrant tones) to a monochrome image.
+3. PRESERVE COLOR: If the image is in color, describe the exact palette. Do not convert color to black and white.
+
+--- DESCRIPTIVE DEPTH ---
+1. EXHAUSTIVE DESCRIPTION: Describe every visible part: subject, composition, line thickness, curves, framing, and background. 
+2. LENGTH: The output MUST be a long paragraph of at least 5 lines. Even for simple images, use descriptive language for the shapes and layout to reach the length.
+3. ICON BUNDLES: For grids of icons, identify every unique item. Replace duplicates with new unique concepts that fit the same theme.
 
 --- GLOBAL OUTPUT CONSTRAINTS ---
-1. START IMMEDIATELY: Start with "Create" and nothing else.
-2. NO MARKDOWN: No asterisks (*), bolding, or hashtags.
-3. ASCII PUNCTUATION ONLY: 
+1. NO MARKDOWN: No asterisks (*), bolding, or hashtags.
+2. ASCII PUNCTUATION ONLY: 
    - Use ONLY standard ASCII. 
    - Use ONLY the standard straight apostrophe (') - NEVER smart/curly ones (’).
-   - No special symbols.
-4. NO MARKETING: No "stunning", "4k", etc.
+3. NO MARKETING: Do not use words like "stunning", "4k", "amazing", or "hyper-realistic".
 
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
 ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use: ${activeNegativeWords.join(", ")}` : ''}`;
 
     const userPrompt = `Write the final prompt now. It MUST start with "Create". 
 It MUST be a long descriptive paragraph (at least 5 lines). 
-Describe exactly what is visible without adding imaginary colors or complexity. 
-Use only visible colors. Use only standard ASCII and straight apostrophes.`;
+Stay within the same style and concept (90% match, 10% variation).
+Describe exactly what is visible. If it is black and white, say so; do not add colors. 
+Use only standard ASCII and straight apostrophes. No labels or special symbols.`;
 
     return await this.executeWithRotation(
       model.provider, 
