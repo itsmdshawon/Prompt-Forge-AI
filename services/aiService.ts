@@ -89,7 +89,7 @@ export class AIService {
         keyIndices[provider] = currentIndex; 
         return result;
       } catch (error: any) {
-        const errLower = (error.message || "").toLowerCase();
+        const errLower = error.message.toLowerCase();
         const isLimitError = errLower.includes("limit") || 
                              errLower.includes("quota") || 
                              errLower.includes("429") || 
@@ -217,43 +217,44 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE ULTIMATE SYSTEM PROMPT - ZERO DEVIATION MODE
-    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to recreate the reference image EXACTLY. 
+    // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND WITH ABSOLUTE INTEGRITY
+    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to create a prompt that is a PERFECT REPLICA of the complexity, style, and subject identity of the reference image.
 
-### ABSOLUTE RULES (STRICTLY ENFORCED):
+FOLLOW THESE RULES RIGIDLY ACROSS ALL MODELS (GEMINI, GROQ, MISTRAL):
 
-1. **START WORD**: You MUST start the output with the word "Create".
-2. **STYLE CLASSIFICATION**: 
-   - First, determine if the image is a [SILHOUETTE], [FLAT VECTOR], [LOGO], or [PHOTOGRAPH].
-   - If it is a SILHOUETTE or VECTOR, keep the output 100% SIMPLE. 
-   - NEVER add realism, textures, shading, skin details, or complex lighting to a silhouette or vector.
-   - If it is a silhouette, use words like "flat black silhouette", "sharp clean edges", and "minimalist solid background".
-3. **SUBJECT INTEGRITY**: 
-   - A WOMAN MUST REMAIN A WOMAN. Never change gender.
-   - AN EAGLE MUST REMAIN A SINGLE-HEADED EAGLE. Never add heads.
-   - NO HYBRIDS: Do not put animal heads on humans. 
-   - SUBJECT COUNT: If there is one subject, describe one.
-4. **NO HALLUCINATIONS**: 
-   - DO NOT add "cutting lines", "geometric overlays", "measurement marks", or artifacts.
-   - DO NOT use the word "10%", "remix", or any percentage-based terminology.
-5. **LENGTH REQUIREMENT**: 
-   - The output must be 5+ lines. 
-   - For simple images, achieve length by describing the SHAPE, CURVATURE, ASPECT RATIO, and COMPOSITION in plain terms. Do not add fake detail to reach length.
-6. **FORMAT**: 
-   - Use plain ASCII only. No markdown (no * or #). Use straight apostrophes (').
-   - No promotional fluff (no "stunning", "best quality").
+--- MANDATORY START & FORMAT ---
+1. ALWAYS start the output with "Create".
+2. NO percentage words: NEVER use the word "10%", "remix", or any percentage in the prompt.
+3. NO META-LANGUAGE: Do not use "This image contains", "In this picture", etc.
 
-### STYLE BOUNDARIES:
-- If Input = Simple Vector -> Output = Simple Vector Description.
-- If Input = Photography -> Output = Detailed Photographic Description.
-- NEVER mix these. A vector should never be described with "skin texture" or "photorealistic".`;
+--- COMPLEXITY PARITY (CRITICAL) ---
+1. MIRROR COMPLEXITY: If the reference is SIMPLE (silhouette, vector, minimalist icon), the prompt MUST specify a SIMPLE output.
+2. BAN TEXTURES ON SIMPLE IMAGES: For silhouettes or vector art, DO NOT use: "textured", "detailed", "realistic", "shading", "highlights", "shadows", "depth", or "intricate".
+3. VECTOR REMAINS VECTOR: If the original is a flat 2D vector, the prompt must explicitly say "flat 2D vector" and "solid background".
+4. SILHOUETTE REMAINS SILHOUETTE: Do not add realism to a silhouette. Describe only the sharp black outline and the solid background color.
 
-    const userPrompt = `Recreate this image as a prompt. 
-- Start with "Create". 
-- Stay 100% faithful to the subject (Identity Lock).
-- Mirror the complexity: If it is a simple silhouette, the prompt must be simple. Do not add textures or realism to vectors.
-- No "10%" text. No extra heads. No cutting lines.
-- ASCII only. Paragraph format, 5+ lines.`;
+--- SUBJECT INTEGRITY & IDENTITY LOCK ---
+1. NO SUBJECT MORPHING: A woman silhouette MUST remain a woman. NEVER change gender.
+2. NO HYBRID SUBJECTS: An eagle must have ONE head. Never describe an eagle with multiple heads. Never put an animal head on a human body unless it is explicitly in the reference.
+3. NO EXTRA ARTIFACTS: Do not add "cutting lines", "geometric shapes", or random objects that were not in the reference.
+4. GENDER LOCK: If the subject is female, the prompt must say "woman" or "female". If the subject is an animal, describe ONLY that animal.
+
+--- REACHING 5-LINE LENGTH WITHOUT HALLUCINATION ---
+1. COMPOSITIONAL DESCRIPTION: To meet the 5-line requirement for simple images, describe the exact geometric curves, the negative space, the aspect ratio, the placement in the frame, and the specific thickness of the lines. Use many words to describe the SIMPLICITY, not to add fake details.
+
+--- CONSTRAINTS ---
+1. NO MARKDOWN: No bolding or asterisks.
+2. ASCII ONLY: No special characters or smart quotes.
+
+${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
+${activeNegativeWords.length > 0 ? `- EXCLUDE: ${activeNegativeWords.join(", ")}` : ''}`;
+
+    const userPrompt = `Generate the final prompt now. Start with "Create". 
+Paragraph format, 5+ lines. 
+STRICT COMPLEXITY MATCH: If the image is a simple silhouette, keep it a flat silhouette with NO textures or shading. 
+IDENTITY LOCK: Woman stays woman, eagle stays 1-headed. 
+NO EXTRA ELEMENTS: No "10%", no cutting lines, no extra heads. 
+ASCII only. Use straight apostrophes.`;
 
     return await this.executeWithRotation(
       model.provider, 
