@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
@@ -152,17 +151,21 @@ export default function App() {
   const getFullPrompt = (rawPrompt: string | undefined, currentSettings: Settings) => {
     if (!rawPrompt) return "";
     
-    // NORMALIZE CHARACTERS: Fix broken UTF-8 sequences and convert smart quotes to standard ASCII
+    // NORMALIZE CHARACTERS & CLEANUP
     let processedPrompt = rawPrompt
-      .replace(/â€™/g, "'")           // Fix common broken UTF-8 for ’
-      .replace(/â€œ/g, '"')           // Fix common broken UTF-8 for “
-      .replace(/â€ /g, '"')           // Fix common broken UTF-8 for ”
-      .replace(/â€“/g, "-")           // Fix common broken UTF-8 for –
-      .replace(/â€”/g, "-")           // Fix common broken UTF-8 for —
-      .replace(/[\u2018\u2019]/g, "'") // Convert smart single quotes to standard
-      .replace(/[\u201C\u201D]/g, '"') // Convert smart double quotes to standard
-      .replace(/\u2013|\u2014/g, '-') // Convert en/em dashes to standard hyphens
-      .replace(/\*/g, '')             // Final cleanup of any rogue asterisks
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, '"')
+      .replace(/â€ /g, '"')
+      .replace(/â€“/g, "-")
+      .replace(/â€”/g, "-")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2013|\u2014/g, '-')
+      .replace(/\*/g, '')
+      // STRICT BAN: Strip "10%", "remix", and any percentage talk if model hallucinated it
+      .replace(/\b10%\b/g, '')
+      .replace(/\bremix\b/gi, '')
+      .replace(/\b\d+%\b/g, '')
       .trim();
     
     const activePrefixes = currentSettings.prefixes.slice(0, currentSettings.prefixCount).join(' ');
