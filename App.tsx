@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
@@ -154,15 +153,17 @@ export default function App() {
     
     // NORMALIZE CHARACTERS: Fix broken UTF-8 sequences and convert smart quotes to standard ASCII
     let processedPrompt = rawPrompt
-      .replace(/â€™/g, "'")           // Fix common broken UTF-8 for ’
-      .replace(/â€œ/g, '"')           // Fix common broken UTF-8 for “
-      .replace(/â€ /g, '"')           // Fix common broken UTF-8 for ”
-      .replace(/â€“/g, "-")           // Fix common broken UTF-8 for –
-      .replace(/â€”/g, "-")           // Fix common broken UTF-8 for —
-      .replace(/[\u2018\u2019]/g, "'") // Convert smart single quotes to standard
-      .replace(/[\u201C\u201D]/g, '"') // Convert smart double quotes to standard
-      .replace(/\u2013|\u2014/g, '-') // Convert en/em dashes to standard hyphens
-      .replace(/\*/g, '')             // Final cleanup of any rogue asterisks
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, '"')
+      .replace(/â€ /g, '"')
+      .replace(/â€“/g, "-")
+      .replace(/â€”/g, "-")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2013|\u2014/g, '-')
+      .replace(/\*/g, '')
+      .replace(/\b10%\b/g, '') // Safety strip of '10%' if AI leaked it
+      .replace(/\bremix\b/gi, '') // Safety strip of 'remix'
       .trim();
     
     const activePrefixes = currentSettings.prefixes.slice(0, currentSettings.prefixCount).join(' ');
@@ -294,7 +295,6 @@ export default function App() {
     const header = "SL No.,Prompt\r\n";
     const rows = completedList.map((img, i) => {
       const finalPrompt = getFullPrompt(img.prompt, settingsRef.current);
-      // Ensure no asterisks, no quotes, and no extra words are present
       const promptText = finalPrompt
         .replace(/\*/g, '')
         .replace(/"/g, '""')

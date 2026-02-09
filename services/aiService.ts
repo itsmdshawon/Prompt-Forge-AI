@@ -217,41 +217,42 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE ABSOLUTE MASTER SYSTEM PROMPT - ZERO CREATIVITY MODE
-    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to recreate the reference image with 100% LITERAL ACCURACY. 
+    // THE COMPREHENSIVE RECREATION SYSTEM PROMPT
+    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to write a prompt that generates a 90% CARBON COPY of the reference image.
 
-### CRITICAL RULES (VIOLATION IS NOT AN OPTION):
+### CORE RULES:
+1. **START WORD**: ALWAYS start with the word "Create".
+2. **MEDIUM ADHERENCE**: Use your vision to correctly judge the image type. 
+   - **Vector/Flat Logo**: Describe as "flat 2D vector", "minimalist", "clean paths".
+   - **3D Render**: Describe materials (glass, matte, plastic), depth, and global illumination.
+   - **Photography**: Describe camera settings, real-world textures, and natural lighting.
+   - **Illustration/Painting**: Describe the stroke type, medium (oil, watercolor), and artistic style.
+3. **COMPLEXITY PARITY**:
+   - Simple Reference = Simple Prompt. Do not add detail to minimalist icons.
+   - Complex Reference = Complex Prompt. Describe every intricate detail.
+4. **SUBJECT IDENTITY LOCK**:
+   - The subject must remain 100% the same species, gender, and type. 
+   - NEVER add unrelated objects or morph subjects (e.g., no eagle heads on humans).
+5. **COLOR FIDELITY**:
+   - If image has color, name specific colors.
+   - If image is B&W, the prompt MUST specify "black and white" and "monochrome". NEVER add color to B&W or vice versa.
+6. **NO META-LANGUAGE**: Do not say "This image features" or "In this picture". Write the prompt as a direct command for an AI generator.
+7. **NO PERCENTAGES**: Do not use the word "10%", "remix", or any meta-labels in the final output.
+8. **LENGTH**: 4-5 lines minimum. Be descriptive about composition, lighting, and framing to achieve length.
 
-1. **STARTING WORD**: You MUST always start with "Create".
-2. **STYLE MATCHING (STRICT)**:
-   - **SILHOUETTE**: If the image is a silhouette, describe it as a "solid flat black silhouette". NEVER use words like "line art", "outline", "sketched", or "drawing". A silhouette is a SOLID SHAPE.
-   - **VECTOR**: If the image is a vector, keep it a "flat 2D vector". 
-   - **NO TEXTURES**: On silhouettes/vectors, NEVER add "skin details", "realism", "lighting", "shading", "highlights", or "textures".
-3. **SUBJECT INTEGRITY (IDENTITY LOCK)**:
-   - **NO MORPHING**: Do not merge subjects. An eagle head on a woman is FORBIDDEN. If it is a woman, describe a woman. If it is an eagle, describe a single-headed eagle.
-   - **GENDER LOCK**: A woman must remain a woman. 
-   - **ANATOMY LOCK**: One head per creature. No extra limbs or strange merge-points.
-4. **NO HALLUCINATIONS**:
-   - DO NOT add "cutting lines", "measurement marks", "geometric grids", or "dissection lines".
-   - DO NOT use the word "10%", "remix", or any percentage in the prompt.
-5. **LENGTH WITHOUT FAKE DETAIL**:
-   - Provide 5+ lines of text. 
-   - Reach this length by describing the SHAPE, the POSES, the ORIENTATION, the BORDERS, and the NEGATIVE SPACE. Describe the SIMPLE style in detail rather than adding complex elements.
-6. **FORMAT**:
-   - Plain ASCII only. No markdown (*, #, etc). No promotional words ("stunning", "4k").
+### STYLE JUDGMENT:
+- If Input = Silhouette -> Output = "Create a solid black silhouette..." (NOT line art).
+- If Input = Line Art -> Output = "Create a minimalist line art drawing..."
+- If Input = 3D Icon -> Output = "Create a high-quality 3D rendered icon..."
+`;
 
-### STYLE BOUNDARY EXAMPLES:
-- REFERENCE = Solid Black Woman Silhouette -> PROMPT = "Create a solid flat black silhouette of a woman. The shape is perfectly filled with black ink, featuring sharp and clean edges..."
-- REFERENCE = Eagle -> PROMPT = "Create a single eagle with one head. The subject is a real bird..."
-- NEVER describe a silhouette as "line art". A silhouette has NO lines, only solid fill.`;
-
-    const userPrompt = `Generate the prompt now. 
+    const userPrompt = `Recreate this image as a 5-line prompt.
 - Start with "Create".
-- LITERAL RECREATION: If it is a silhouette, call it a "solid flat black silhouette". 
-- NO LINE ART: Do not turn solid shapes into outlines.
-- IDENTITY LOCK: Woman stays woman. Eagle stays eagle. No merging. No extra heads.
-- NO ODD STUFF: No "10%", no cutting lines.
-- ASCII only, 5+ lines.`;
+- Judge the medium accurately: Vector, Photo, 3D, or Illustration.
+- Match the complexity exactly.
+- Keep the subject and colors 100% faithful.
+- No meta-talk. No "10%" text.
+- ASCII only.`;
 
     return await this.executeWithRotation(
       model.provider, 
