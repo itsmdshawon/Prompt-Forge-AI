@@ -228,19 +228,18 @@ FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 2. NO META-LANGUAGE: Never use "The image is", "An illustration of", etc.
 
 --- SUBJECT & IDENTITY PRESERVATION (CRITICAL) ---
-1. ABSOLUTE ACCURACY: You MUST NOT change the identity of the subjects. A woman silhouette MUST stay a woman. An eagle MUST stay an eagle. Do not swap gender, age, or species.
-2. COMPLEXITY MIRRORING: Mirror the complexity level exactly. 
-   - If the reference is a SIMPLE, flat, single-color silhouette, the prompt MUST describe a SIMPLE, flat, single-color silhouette. 
-   - DO NOT add 3D, depth, shading, intricate feathers, or realistic lighting if they aren't in the original.
-3. 10% REMIX LIMIT: The variation should be minor (e.g., a slight change in the pose angle or a tiny decorative flourish), NOT a change in the core style or subject.
+1. NO SUBJECT SWAPPING: A woman silhouette MUST stay a woman. NEVER turn a woman into a man. An eagle MUST stay an eagle with ONE head. NEVER add extra heads or limbs.
+2. NO ODD ARTIFACTS: NEVER add cutting lines, strange objects, or random geometric shapes that aren't in the original.
+3. COMPLEXITY MIRRORING: If the reference is a SIMPLE silhouette, the prompt must be for a SIMPLE silhouette. Do not inflate the detail.
+4. 10% REMIX LIMIT: The variation should be strictly stylistic (e.g., a slightly different brush texture or a 5-degree change in perspective). Do NOT change the core subject or the count of items.
 
 --- MEDIUM & COLOR INTEGRITY ---
-1. MEDIUM LOYALTY: Maintain the medium. Vector stays Vector. Photography stays Photography. 3D stays 3D. Non-vector stays Non-vector.
-2. COLOR LOCK: Use ONLY the colors visible. If black and white, the prompt MUST be black and white only. NEVER turn B&W into color or vice versa.
+1. MEDIUM LOYALTY: Maintain the medium. Vector stays Vector. Photography stays Photography. 
+2. COLOR LOCK: Use ONLY visible colors. Never turn B&W into color. Never add colors like "Gold" or "Neon" to a black and white image.
 
 --- DESCRIPTIVE DEPTH & LENGTH ---
-1. EXHAUSTIVE BUT RELEVANT: Describe the composition, framing, and specific shapes. To reach the 5-line requirement for SIMPLE images, use wordy descriptions for the simple parts (e.g., "The smooth, thick black curves forming the outer boundary of the silhouette...").
-2. ICON BUNDLES: List every item. Replace duplicates with unique ones in the EXACT SAME simple style.
+1. EXHAUSTIVE DESCRIPTION: Describe the composition and framing. To reach the 5-line requirement for simple images, describe the exact curves, proportions, and simplicity in detail.
+2. ICON BUNDLES: List every item accurately. Replace duplicates with unique ones in the EXACT SAME simple style.
 
 --- GLOBAL OUTPUT CONSTRAINTS ---
 1. NO MARKDOWN: No asterisks (*), bolding, or hashtags.
@@ -252,10 +251,10 @@ ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use: ${activeNegativeWords.
 
     const userPrompt = `Write the final prompt now. Start with "Create". 
 It MUST be a long paragraph (at least 5 lines). 
-Match the reference style and subject 90%. 
-If the reference is simple, KEEP IT SIMPLE. 
-A woman must stay a woman. Simple shapes must stay simple. 
-Do not add imaginary colors or complexity. 
+Match the reference subject and style 90%. 
+PRESERVE IDENTITY: Woman stays woman, Eagle stays 1-headed eagle. 
+NO ODD ELEMENTS: Do not add lines or strange shapes. 
+If simple, keep it simple. No color hallucination. 
 Use only standard ASCII and straight apostrophes.`;
 
     return await this.executeWithRotation(
