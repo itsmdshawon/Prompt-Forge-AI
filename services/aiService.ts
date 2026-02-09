@@ -218,46 +218,45 @@ export class AIService {
 
     const activeNegativeWords = settings.negativeWords.slice(0, settings.negativeWordCount);
     
-    // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND
-    const systemPrompt = `You are a professional AI image prompt engineer. Your task is to analyze a reference image and create a prompt for an AI generator to recreate it with 90% accuracy and 10% creative variation.
+    // THE MASTER SYSTEM PROMPT - RIGID RECREATION COMMAND WITH CARBON COPY FOCUS
+    const systemPrompt = `You are a professional AI image prompt engineer. Your goal is to create a prompt that serves as a CARBON COPY of the reference image, with exactly 10% subtle variation for legal safety.
 
 FOLLOW THESE RULES RIGIDLY FOR ALL MODELS:
 
 --- MANDATORY START ---
 1. YOU MUST ALWAYS START THE PROMPT WITH THE WORD "Create".
-2. NO META-LANGUAGE: NEVER use phrases like "The image is", "This graphic shows", "An illustration of", "A photograph of", or "This image features".
-3. Write the response as a direct command for an AI image generator.
+2. NO META-LANGUAGE: Never use "The image is", "An illustration of", etc.
 
---- CATEGORY & MEDIUM INTEGRITY ---
-1. IDENTIFY MEDIUM: Determine if the image is a Vector (Flat), 3D Render, Photography, Illustration, or PNG icon. 
-2. NO MIXING: Do not treat vectors as photos, or photos as 3D renders. Use specific terms: "Vector illustration", "Realistic photography", "3D render", "Hand-drawn sketch".
-3. COMPLEXITY MATCHING: If the reference is simple, the prompt must be simple. If the reference is complex, the prompt must be complex.
+--- SUBJECT & IDENTITY PRESERVATION (CRITICAL) ---
+1. ABSOLUTE ACCURACY: You MUST NOT change the identity of the subjects. A woman silhouette MUST stay a woman. An eagle MUST stay an eagle. Do not swap gender, age, or species.
+2. COMPLEXITY MIRRORING: Mirror the complexity level exactly. 
+   - If the reference is a SIMPLE, flat, single-color silhouette, the prompt MUST describe a SIMPLE, flat, single-color silhouette. 
+   - DO NOT add 3D, depth, shading, intricate feathers, or realistic lighting if they aren't in the original.
+3. 10% REMIX LIMIT: The variation should be minor (e.g., a slight change in the pose angle or a tiny decorative flourish), NOT a change in the core style or subject.
 
---- COLOR ACCURACY (CRITICAL) ---
-1. STRICT PALETTE: Only mention colors visible in the image.
-2. NO COLOR HALLUCINATION: If the image is black and white, describe it only as "black and white". NEVER add color (gold, neon, vibrant tones) to a monochrome image.
-3. PRESERVE COLOR: If the image is in color, describe the exact palette. Do not convert color to black and white.
+--- MEDIUM & COLOR INTEGRITY ---
+1. MEDIUM LOYALTY: Maintain the medium. Vector stays Vector. Photography stays Photography. 3D stays 3D. Non-vector stays Non-vector.
+2. COLOR LOCK: Use ONLY the colors visible. If black and white, the prompt MUST be black and white only. NEVER turn B&W into color or vice versa.
 
---- DESCRIPTIVE DEPTH ---
-1. EXHAUSTIVE DESCRIPTION: Describe every visible part: subject, composition, line thickness, curves, framing, and background. 
-2. LENGTH: The output MUST be a long paragraph of at least 5 lines. Even for simple images, use descriptive language for the shapes and layout to reach the length.
-3. ICON BUNDLES: For grids of icons, identify every unique item. Replace duplicates with new unique concepts that fit the same theme.
+--- DESCRIPTIVE DEPTH & LENGTH ---
+1. EXHAUSTIVE BUT RELEVANT: Describe the composition, framing, and specific shapes. To reach the 5-line requirement for SIMPLE images, use wordy descriptions for the simple parts (e.g., "The smooth, thick black curves forming the outer boundary of the silhouette...").
+2. ICON BUNDLES: List every item. Replace duplicates with unique ones in the EXACT SAME simple style.
 
 --- GLOBAL OUTPUT CONSTRAINTS ---
 1. NO MARKDOWN: No asterisks (*), bolding, or hashtags.
-2. ASCII PUNCTUATION ONLY: 
-   - Use ONLY standard ASCII. 
-   - Use ONLY the standard straight apostrophe (') - NEVER smart/curly ones (’).
-3. NO MARKETING: Do not use words like "stunning", "4k", "amazing", or "hyper-realistic".
+2. ASCII ONLY: Use ONLY standard ASCII characters. Use straight apostrophes (').
+3. NO MARKETING: No "stunning", "4k", or "amazing".
 
 ${settings.customInstruction ? `- USER REQUEST: "${settings.customInstruction}"` : ''}
 ${activeNegativeWords.length > 0 ? `- EXCLUDE: Never use: ${activeNegativeWords.join(", ")}` : ''}`;
 
-    const userPrompt = `Write the final prompt now. It MUST start with "Create". 
-It MUST be a long descriptive paragraph (at least 5 lines). 
-Stay within the same style and concept (90% match, 10% variation).
-Describe exactly what is visible. If it is black and white, say so; do not add colors. 
-Use only standard ASCII and straight apostrophes. No labels or special symbols.`;
+    const userPrompt = `Write the final prompt now. Start with "Create". 
+It MUST be a long paragraph (at least 5 lines). 
+Match the reference style and subject 90%. 
+If the reference is simple, KEEP IT SIMPLE. 
+A woman must stay a woman. Simple shapes must stay simple. 
+Do not add imaginary colors or complexity. 
+Use only standard ASCII and straight apostrophes.`;
 
     return await this.executeWithRotation(
       model.provider, 
