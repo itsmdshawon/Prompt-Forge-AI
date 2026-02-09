@@ -151,19 +151,22 @@ export default function App() {
   const getFullPrompt = (rawPrompt: string | undefined, currentSettings: Settings) => {
     if (!rawPrompt) return "";
     
-    // NORMALIZE CHARACTERS: Fix broken UTF-8 sequences and convert smart quotes to standard ASCII
+    // NORMALIZE CHARACTERS: Stronger ASCII filter and mojibake pattern removal
     let processedPrompt = rawPrompt
-      .replace(/â€™/g, "'")
-      .replace(/â€œ/g, '"')
-      .replace(/â€ /g, '"')
+      // Remove known mojibake patterns seen in screenshots (UTF-8 symbols interpreted incorrectly)
+      .replace(/â™€/g, "")
+      .replace(/â^ž/g, "")
+      .replace(/â€/g, "")
       .replace(/â€“/g, "-")
       .replace(/â€”/g, "-")
-      .replace(/[\u2018\u2019]/g, "'")
-      .replace(/[\u201C\u201D]/g, '"')
-      .replace(/\u2013|\u2014/g, '-')
+      .replace(/â€™/g, "'")
+      .replace(/â€œ/g, '"')
+      // Remove any non-ASCII characters to prevent unusual symbols entirely
+      .replace(/[^\x00-\x7F]/g, "")
+      // Remove unnecessary asterisks and meta words
       .replace(/\*/g, '')
-      .replace(/\b10%\b/g, '') // Safety strip of '10%' if AI leaked it
-      .replace(/\bremix\b/gi, '') // Safety strip of 'remix'
+      .replace(/\b10%\b/g, '')
+      .replace(/\bremix\b/gi, '')
       .trim();
     
     const activePrefixes = currentSettings.prefixes.slice(0, currentSettings.prefixCount).join(' ');

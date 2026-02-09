@@ -222,37 +222,34 @@ export class AIService {
 
 ### CORE RULES:
 1. **START WORD**: ALWAYS start with the word "Create".
-2. **MEDIUM ADHERENCE**: Use your vision to correctly judge the image type. 
-   - **Vector/Flat Logo**: Describe as "flat 2D vector", "minimalist", "clean paths".
-   - **3D Render**: Describe materials (glass, matte, plastic), depth, and global illumination.
-   - **Photography**: Describe camera settings, real-world textures, and natural lighting.
-   - **Illustration/Painting**: Describe the stroke type, medium (oil, watercolor), and artistic style.
-3. **COMPLEXITY PARITY**:
-   - Simple Reference = Simple Prompt. Do not add detail to minimalist icons.
-   - Complex Reference = Complex Prompt. Describe every intricate detail.
-4. **SUBJECT IDENTITY LOCK**:
-   - The subject must remain 100% the same species, gender, and type. 
-   - NEVER add unrelated objects or morph subjects (e.g., no eagle heads on humans).
-5. **COLOR FIDELITY**:
-   - If image has color, name specific colors.
-   - If image is B&W, the prompt MUST specify "black and white" and "monochrome". NEVER add color to B&W or vice versa.
-6. **NO META-LANGUAGE**: Do not say "This image features" or "In this picture". Write the prompt as a direct command for an AI generator.
-7. **NO PERCENTAGES**: Do not use the word "10%", "remix", or any meta-labels in the final output.
-8. **LENGTH**: 4-5 lines minimum. Be descriptive about composition, lighting, and framing to achieve length.
+2. **MEDIUM ADHERENCE**: Use your vision to correctly judge the image type (Vector, 3D Render, Photography, Illustration).
+3. **STRICT SYMBOL BAN**: 
+   - NEVER use emojis, gender symbols (♀️, ♂️), heart icons, or ANY non-standard characters. 
+   - If you need to include a symbol, describe it using plain English words (e.g., "female gender symbol", "infinity icon"). 
+   - Use ONLY plain ASCII characters (a-z, A-Z, 0-9, standard punctuation).
+4. **COMPLEXITY PARITY**:
+   - Simple Reference = Simple Prompt.
+   - Complex Reference = Complex Prompt.
+5. **SUBJECT IDENTITY LOCK**:
+   - The subject must remain 100% the same. No morphing or adding unrelated objects.
+6. **COLOR FIDELITY**:
+   - Match colors exactly. B&W must stay B&W. Color must stay color.
+7. **NO META-LANGUAGE**: Do not say "This image features". Write the prompt as a direct command.
+8. **NO PERCENTAGES**: Do not use "10%", "remix", or similar labels.
+9. **LENGTH**: 4-5 lines minimum.
 
 ### STYLE JUDGMENT:
-- If Input = Silhouette -> Output = "Create a solid black silhouette..." (NOT line art).
+- If Input = Silhouette -> Output = "Create a solid black silhouette..."
 - If Input = Line Art -> Output = "Create a minimalist line art drawing..."
 - If Input = 3D Icon -> Output = "Create a high-quality 3D rendered icon..."
 `;
 
     const userPrompt = `Recreate this image as a 5-line prompt.
 - Start with "Create".
-- Judge the medium accurately: Vector, Photo, 3D, or Illustration.
-- Match the complexity exactly.
-- Keep the subject and colors 100% faithful.
-- No meta-talk. No "10%" text.
-- ASCII only.`;
+- Judge the medium accurately.
+- Match complexity and color perfectly.
+- NO SYMBOLS, NO EMOJIS, NO UNUSUAL CHARACTERS.
+- Use only standard English text.`;
 
     return await this.executeWithRotation(
       model.provider, 
