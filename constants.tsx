@@ -10,10 +10,10 @@ export const INITIAL_MODELS: Model[] = [
   
   // Groq Cloud models (ONLY Vision-capable models as per latest documentation)
   // These are the new multimodal Llama 4 preview models.
-  { id: 'meta-llama/llama-4-maverick-17b-128e-instruct', name: 'Llama 4 Maverick 17B Vision', provider: 'groq', hasVision: true },
   { id: 'meta-llama/llama-4-scout-17b-16e-instruct', name: 'Llama 4 Scout 17B Vision', provider: 'groq', hasVision: true },
   
   // Mistral AI models (Vision Capable)
+  { id: 'pixtral-large-vision', name: 'Pixtral Large Vision', provider: 'mistral', hasVision: true },
   { id: 'pixtral-12b-vision', name: 'Pixtral 12B Vision (Standard)', provider: 'mistral', hasVision: true },
 ];
 

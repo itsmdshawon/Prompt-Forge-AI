@@ -161,8 +161,12 @@ export class AIService {
   ) {
     const baseUrl = provider === 'groq' ? 'https://api.groq.com/openai/v1' : 'https://api.mistral.ai/v1';
     let actualModelId = modelId;
-    if (provider === 'mistral' && modelId === 'pixtral-12b-vision') {
-      actualModelId = 'pixtral-12b-2409';
+    if (provider === 'mistral') {
+      if (modelId === 'pixtral-12b-vision') {
+        actualModelId = 'pixtral-12b-2409';
+      } else if (modelId === 'pixtral-large-vision') {
+        actualModelId = 'pixtral-large-latest';
+      }
     }
 
     const messages: any[] = [];
